@@ -1,6 +1,22 @@
 /* باربي Barbii — منطق التطبيق: متجر + POS + إدارة + PWA */
 (function () {
   "use strict";
+
+  /* ---------- حماية: لا صفحة بيضاء صامتة ---------- */
+  function bootError(msg) {
+    const el = document.getElementById("bootError");
+    if (!el) return;
+    el.hidden = false;
+    el.textContent = "⚠️ تعذّر تشغيل التطبيق: " + msg + "\nجرّب تحديث الصفحة (Ctrl+Shift+R).";
+  }
+  window.addEventListener("error", (e) => bootError(
+    (e.message || "خطأ غير معروف") + (e.filename ? " — " + String(e.filename).split("/").pop() + ":" + (e.lineno || 0) : "")
+  ));
+  window.addEventListener("unhandledrejection", (e) => bootError(
+    String((e.reason && e.reason.message) || e.reason || "خطأ غير متوقع")
+  ));
+  if (!window.BARBII_SEED) bootError("ملف البيانات js/data.js لم يُحمَّل");
+
   const DB_KEY = "barbii_db_v1";
   const $ = (s, el) => (el || document).querySelector(s);
   const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
@@ -14,7 +30,8 @@
       const raw = localStorage.getItem(DB_KEY);
       if (raw) return JSON.parse(raw);
     } catch (e) { /* تجاهل */ }
-    const db = JSON.parse(JSON.stringify(window.BARBII_SEED));
+    const seed = window.BARBII_SEED || { categories: [], products: [], orders: [], settings: {} };
+    const db = JSON.parse(JSON.stringify(seed));
     saveDB(db);
     return db;
   }
@@ -416,7 +433,7 @@
   window.exportData = exportData;
   function resetData() {
     if (!confirm("إعادة تعيين كل البيانات إلى الافتراضية؟")) return;
-    localStorage.removeItem(DB_KEY); localStorage.removeItem("barbii_cart");
+    try { localStorage.removeItem(DB_KEY); localStorage.removeItem("barbii_cart"); } catch (e) { /* تخزين محظور */ }
     db = loadDB(); state.cart = []; state.posCart = []; renderStore(); renderAdmin(); toast("🔄 تمت إعادة التعيين");
   }
   window.resetData = resetData;
@@ -458,5 +475,6 @@
     bindFilters(); initPWA(); renderStore(); updateCartBadge();
     const y = new Date().getFullYear();
     $("#year").textContent = y;
+    const be = $("#bootError"); if (be) { be.hidden = true; be.textContent = ""; }
   });
 })();
