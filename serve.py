@@ -42,7 +42,34 @@ NO_STORE = (".html", ".webmanifest", "/sw.js")
 
 
 class Handler(SimpleHTTPRequestHandler):
+    # HTTP/1.1 مع keep-alive: إطارات المعاينة السحابية وبعض الوكلاء
+    # تتعامل معه بشكل موثوق أكثر من HTTP/1.0 (اتصال جديد لكل ملف).
+    protocol_version = "HTTP/1.1"
+    server_version = "BarbiiDev/1.1"
+    sys_version = ""
+
     extensions_map = {**SimpleHTTPRequestHandler.extensions_map, **EXTRA_TYPES}
+
+    def _plain(self, body="ok"):
+        data = (body + "\n").encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "text/plain; charset=utf-8")
+        self.send_header("Content-Length", str(len(data)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        if getattr(self, "command", "GET") != "HEAD":
+            self.wfile.write(data)
+
+    def do_GET(self):
+        # مسار فحص الصحة الذي تستخدمه منصات المعاينة
+        if self.path.split("?", 1)[0] in ("/healthz", "/health", "/ping"):
+            return self._plain()
+        return super().do_GET()
+
+    def do_HEAD(self):
+        if self.path.split("?", 1)[0] in ("/healthz", "/health", "/ping"):
+            return self._plain()
+        return super().do_HEAD()
 
     def end_headers(self):
         path = self.path.split("?", 1)[0]
@@ -70,6 +97,8 @@ class Handler(SimpleHTTPRequestHandler):
 
 def main():
     port = int(sys.argv[1] if len(sys.argv) > 1 else os.environ.get("PORT", "8000"))
+    ThreadingHTTPServer.daemon_threads = True
+    ThreadingHTTPServer.allow_reuse_address = True
     server = ThreadingHTTPServer(("0.0.0.0", port), partial(Handler, directory=ROOT))
     print(f"🎀 باربي — خادم التطوير يعمل على http://0.0.0.0:{port}  (المجلد: {ROOT})", flush=True)
     try:
