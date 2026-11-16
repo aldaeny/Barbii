@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>باربي Barbii — منصة تجارة أطفال متكاملة | PWA + POS + إدارة</title>
+<meta name="description" content="باربي: منصة تجارة أطفال متكاملة — متجر إلكتروني PWA + نقاط بيع POS + لوحة إدارة. ملابس وألعاب وأحذية ومستلزمات مدرسة للأطفال.">
+<meta name="theme-color" content="#ec4899">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- الهيدر -->
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="logo" href="#" onclick="showView('store');return false;">
+      <span class="logo-emoji">🎀</span>
+      <span>باربي Barbii<small>منصة تجارة أطفال متكاملة</small></span>
+    </a>
+    <nav class="nav">
+      <button data-nav="store" class="active" onclick="showView('store')">🛍️ المتجر</button>
+      <button data-nav="pos" onclick="showView('pos')">🧾 نقاط البيع POS</button>
+      <button data-nav="admin" onclick="showView('admin')">📊 الإدارة</button>
+    </nav>
+    <button class="cart-btn" onclick="openCart()">🛒 السلة <span class="count" id="cartCount">0</span></button>
+  </div>
+</header>
+
+<div class="install-bar" id="installBar">
+  <span>📲 ثبّت تطبيق باربي على جهازك للعمل بدون إنترنت</span>
+  <button class="btn btn-pink" id="installBtn" style="padding:7px 16px">تثبيت</button>
+</div>
+
+<main class="wrap">
+
+  <!-- ===== المتجر ===== -->
+  <section id="view-store" class="view">
+    <div class="hero">
+      <div>
+        <span class="pill">🌸 توصيل سريع • الدفع عند الاستلام</span>
+        <h1>كل ما يحتاجه طفلك في مكان واحد 🎈</h1>
+        <p>ملابس • ألعاب • أحذية • مستلزمات مدرسة • مستلزمات أطفال صغار — بأسعار بالدينار العراقي وتوصيل لجميع المحافظات.</p>
+      </div>
+      <div class="hero-emoji">🧸</div>
+    </div>
+
+    <div class="toolbar">
+      <label class="search">🔍 <input id="searchInput" type="search" placeholder="ابحث عن منتج… (اسم، وصف، أو رمز SKU)"></label>
+      <select id="ageSelect" class="input">
+        <option value="all">كل الأعمار</option>
+        <option value="0-">0-3 سنوات</option>
+        <option value="2-">2-6 سنوات</option>
+        <option value="3-">3-8 سنوات</option>
+        <option value="4-">4-10 سنوات</option>
+        <option value="5-">5-12 سنة</option>
+      </select>
+      <select id="sortSelect" class="input">
+        <option value="popular">الأكثر رواجاً</option>
+        <option value="cheap">السعر: من الأقل</option>
+        <option value="expensive">السعر: من الأعلى</option>
+        <option value="name">الاسم أ-ي</option>
+      </select>
+    </div>
+
+    <div class="cats" id="cats"></div>
+    <div class="grid" id="productGrid"></div>
+  </section>
+
+  <!-- ===== نقاط البيع POS ===== -->
+  <section id="view-pos" class="view hidden">
+    <h1 style="margin-top:0">🧾 نقاط البيع — الكاشير</h1>
+    <div class="pos-layout">
+      <div class="pos-panel">
+        <div class="toolbar" style="margin-top:0">
+          <label class="search">📷 <input id="barcodeInput" placeholder="امسح أو اكتب رمز المنتج SKU ثم Enter" onkeydown="if(event.key==='Enter')posBarcode()"></label>
+          <button class="btn btn-pink" onclick="posBarcode()">بحث</button>
+        </div>
+        <div class="pos-grid" id="posGrid"></div>
+      </div>
+      <aside class="pos-panel">
+        <h2 style="margin-top:0">🧺 فاتورة البيع</h2>
+        <div id="posCartItems"></div>
+        <hr>
+        <label style="display:flex;flex-direction:column;gap:6px;font-weight:700">خصم %
+          <input id="posDiscount" type="number" min="0" max="100" value="0" class="input">
+        </label>
+        <div class="total-row"><span>المجموع الفرعي</span><span id="posSubtotal">0 د.ع</span></div>
+        <div class="total-row"><span>الخصم</span><span id="posDiscountVal">0 د.ع</span></div>
+        <div class="total-row grand"><span>الإجمالي</span><span id="posTotal">0 د.ع</span></div>
+        <label style="display:flex;flex-direction:column;gap:6px;font-weight:700;margin-top:8px">المبلغ المدفوع (د.ع)
+          <input id="posPaid" type="number" min="0" placeholder="مثال: 50000" class="input">
+        </label>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn btn-green" id="posPayBtn" style="flex:1" onclick="posPay()">💵 إتمام البيع</button>
+          <button class="btn btn-ghost" onclick="posClear()">تفريغ</button>
+        </div>
+        <hr>
+        <h3>📈 مبيعات اليوم (POS)</h3>
+        <div class="total-row grand"><span id="posDaySales">0 د.ع</span></div>
+        <div class="meta" id="posDayCount">0 فاتورة</div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- ===== الإدارة ===== -->
+  <section id="view-admin" class="view hidden">
+    <h1 style="margin-top:0">📊 لوحة الإدارة</h1>
+    <div class="stats">
+      <div class="stat"><div class="n" id="stTodaySales">0</div><div class="l">مبيعات اليوم</div></div>
+      <div class="stat"><div class="n" id="stTodayOrders">0</div><div class="l">طلبات اليوم</div></div>
+      <div class="stat"><div class="n" id="stProducts">0</div><div class="l">منتج في الكتالوج</div></div>
+      <div class="stat"><div class="n" id="stLowStock">0</div><div class="l">⚠️ مخزون منخفض (≤5)</div></div>
+    </div>
+
+    <div class="tabs" id="adminTabs">
+      <button data-tab="dashboard" class="active">📈 نظرة عامة</button>
+      <button data-tab="products">📦 المنتجات</button>
+      <button data-tab="orders">🧾 الطلبات</button>
+      <button data-tab="settings">⚙️ الإعدادات</button>
+    </div>
+
+    <div id="pane-dashboard" class="admin-pane">
+      <h2>مبيعات آخر 7 أيام</h2>
+      <canvas class="chart" id="salesChart"></canvas>
+      <p class="meta">تُحسب من الطلبات المسجلة في المتجر ونقاط البيع. البيانات محفوظة محلياً في متصفحك.</p>
+    </div>
+
+    <div id="pane-products" class="admin-pane hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px">
+        <h2>إدارة المنتجات</h2>
+        <button class="btn btn-pink" onclick="openProductForm()">➕ إضافة منتج</button>
+      </div>
+      <div class="table-wrap"><table id="productsTable">
+        <thead><tr><th></th><th>المنتج</th><th>الفئة</th><th>السعر</th><th>المخزون</th><th>إجراءات</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+
+    <div id="pane-orders" class="admin-pane hidden">
+      <h2>الطلبات</h2>
+      <div class="table-wrap"><table id="ordersTable">
+        <thead><tr><th>الطلب</th><th>الزبون</th><th>الكمية</th><th>الإجمالي</th><th>الحالة</th><th>تغيير الحالة</th></tr></thead>
+        <tbody></tbody>
+      </table></div>
+    </div>
+
+    <div id="pane-settings" class="admin-pane hidden">
+      <h2>إعدادات المتجر</h2>
+      <form id="settingsForm" class="form" style="max-width:480px">
+        <label>اسم المتجر <input name="storeName" class="input" required></label>
+        <label>الهاتف <input name="phone" class="input"></label>
+        <label>رسوم التوصيل (د.ع) <input name="deliveryFee" type="number" min="0" class="input"></label>
+        <label>توصيل مجاني فوق (د.ع) <input name="freeAbove" type="number" min="0" class="input"></label>
+        <button class="btn btn-pink" type="submit">💾 حفظ الإعدادات</button>
+      </form>
+      <hr>
+      <h3>البيانات</h3>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost" onclick="exportData()">⬇️ تصدير البيانات JSON</button>
+        <button class="btn btn-red" onclick="resetData()">🔄 إعادة تعيين البيانات</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site">
+  باربي Barbii © <span id="year"></span> — منصة تجارة أطفال متكاملة: PWA + POS + إدارة • تعمل بدون إنترنت بعد أول زيارة
+</footer>
+
+<!-- شريط سفلي للجوال -->
+<nav class="bottom-nav">
+  <button data-nav="store" class="active" onclick="showView('store')"><span class="ic">🛍️</span>المتجر</button>
+  <button data-nav="pos" onclick="showView('pos')"><span class="ic">🧾</span>POS</button>
+  <button data-nav="admin" onclick="showView('admin')"><span class="ic">📊</span>الإدارة</button>
+  <button onclick="openCart()"><span class="ic">🛒</span>السلة</button>
+</nav>
+
+<!-- درج السلة -->
+<div class="overlay" id="overlay"></div>
+<aside class="drawer" id="cartDrawer" aria-label="سلة التسوق">
+  <header><h2 style="margin:0">🛒 سلة التسوق</h2><button class="btn btn-ghost" onclick="closeCart()">✕</button></header>
+  <div class="items" id="cartItems"></div>
+  <footer>
+    <div class="total-row"><span>المجموع الفرعي</span><span id="cartSubtotal">0 د.ع</span></div>
+    <div class="total-row"><span>التوصيل</span><span id="cartDelivery">0 د.ع</span></div>
+    <div class="total-row grand"><span>الإجمالي</span><span id="cartTotal">0 د.ع</span></div>
+    <button class="btn btn-pink btn-block" id="checkoutBtn" onclick="openCheckout()">✅ إتمام الطلب — الدفع عند الاستلام</button>
+  </footer>
+</aside>
+
+<!-- نافذة إتمام الطلب -->
+<div class="modal" id="checkoutModal">
+  <div class="modal-box">
+    <h2>📦 إتمام الطلب</h2>
+    <div id="coSummary" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px"></div>
+    <form id="checkoutForm" class="form">
+      <label>الاسم الكامل <input name="name" class="input" required placeholder="مثال: أم محمد"></label>
+      <label>رقم الهاتف <input name="phone" class="input" required placeholder="07xxxxxxxxx" inputmode="tel"></label>
+      <label>المحافظة
+        <select name="city" class="input">
+          <option>بغداد</option><option>البصرة</option><option>أربيل</option><option>الموصل</option>
+          <option>النجف</option><option>كربلاء</option><option>الأنبار</option><option>ديالى</option>
+          <option>صلاح الدين</option><option>كركوك</option><option>ذي قار</option><option>ميسان</option>
+          <option>واسط</option><option>بابل</option><option>القادسية</option><option>المثنى</option><option>سليمانية</option><option>دهوك</option>
+        </select>
+      </label>
+      <label>العنوان بالتفصيل <textarea name="address" class="input" rows="2" required placeholder="المنطقة، الشارع، رقم الدار…"></textarea></label>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-pink" style="flex:1" type="submit">تأكيد الطلب</button>
+        <button class="btn btn-ghost" type="button" onclick="closeCheckout()">إلغاء</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- نافذة نجاح الطلب -->
+<div class="modal" id="successModal">
+  <div class="modal-box" style="text-align:center">
+    <div style="font-size:64px">🎉</div>
+    <h2>تم استلام طلبك!</h2>
+    <p id="successText"></p>
+    <button class="btn btn-pink btn-block" onclick="closeSuccess();showView('store')">متابعة التسوق</button>
+  </div>
+</div>
+
+<!-- نافذة إيصال POS -->
+<div class="modal" id="posModal">
+  <div class="modal-box">
+    <h2>🧾 إيصال البيع</h2>
+    <div class="receipt" id="receiptText"></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn btn-pink" style="flex:1" onclick="printReceipt()">🖨️ طباعة</button>
+      <button class="btn btn-ghost" onclick="closePOS()">إغلاق</button>
+    </div>
+  </div>
+</div>
+
+<!-- نافذة منتج (إضافة/تعديل) -->
+<div class="modal" id="productModal">
+  <div class="modal-box">
+    <h2 id="productModalTitle">إضافة منتج</h2>
+    <form id="productForm" class="form">
+      <label>اسم المنتج <input name="name" class="input" required></label>
+      <label>الفئة
+        <select name="category" class="input">
+          <option value="clothes">ملابس</option><option value="toys">ألعاب</option>
+          <option value="shoes">أحذية</option><option value="school">مدرسة</option>
+          <option value="accessories">إكسسوارات</option><option value="baby">أطفال صغار</option>
+        </select>
+      </label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <label>السعر (د.ع) <input name="price" type="number" min="1" class="input" required></label>
+        <label>السعر قبل الخصم <input name="oldPrice" type="number" min="0" class="input"></label>
+        <label>المخزون <input name="stock" type="number" min="0" class="input" required></label>
+        <label>إيموجي <input name="emoji" class="input" placeholder="🎁"></label>
+        <label>العمر المناسب <input name="age" class="input" placeholder="4-8 سنوات"></label>
+        <label>شارة <input name="badge" class="input" placeholder="جديد / خصم"></label>
+      </div>
+      <label>الوصف <textarea name="desc" class="input" rows="2"></textarea></label>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-pink" style="flex:1" type="submit">💾 حفظ</button>
+        <button class="btn btn-ghost" type="button" onclick="closeProductForm()">إلغاء</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
