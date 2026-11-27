@@ -2,7 +2,7 @@
 (function () {
   "use strict";
 
-  const VAPID_PUBLIC_KEY = "YOUR_VAPID_PUBLIC_KEY_HERE"; // استبدل بمفتاحك العام
+  const VAPID_PUBLIC_KEY = "BA3H3OJcis7Qx3-rlv_kk9hzjlbsdcvquWbuKxxWdAq43tr7ePI2q065AFAJCAGuK9SUquNoXVjJHOCNcqwJpB0"; // استبدل بمفتاحك العام
   const NOTIFICATION_CHANNELS = {
     newOrder: { title: "📦 طلب جديد", tag: "new-order" },
     lowStock: { title: "⚠️ مخزون منخفض", tag: "low-stock" },
